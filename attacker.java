@@ -52,7 +52,7 @@ public class Attacker {
     Constantly check if an attack server is online.
   */
   private static void waitForAttackServer() {
-    int waiting_time = 1 * 1000;
+    int waiting_time = 500;
     while (true) {
       try (Socket s = new Socket(coordinator_ip_string, coordinator_port)) {
         s.close();
