@@ -7,7 +7,7 @@ import java.text.SimpleDateFormat;
 public class server {
     public static String connection_log = "connection_log.txt";
     public static Thread thr1 = new Thread();
-    public static int socketHandleTime = 10000;
+    public static int socketHandleTime = 5 * 1000;
 
     //open_close_flag == open: 1, close: 0
     private static void logToFile(String connected_client_IP, boolean open_close_flag) {

