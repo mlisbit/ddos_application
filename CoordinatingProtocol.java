@@ -1,3 +1,8 @@
+/*
+  A class containing the agreed upon protocol used between a coordinating server
+  and attackers. This is meant to be easy to extend, and follows a state design pattern.
+*/
+
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -22,7 +27,9 @@ public class CoordinatingProtocol {
     this.victim_time = victim_time;
   }
 
-
+  /*
+    basically just spits out all the info provided in the constructor. 
+  */
   public String processInput() {
     String theOutput = null;
     if (state == WAITING) {

